@@ -1,3 +1,5 @@
+[![GoDoc](https://godoc.org/github.com/ModChain/rlp?status.svg)](https://godoc.org/github.com/ModChain/rlp)
+
 # Recursive Length Prefix encoding (RLP)
 
 See: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp
