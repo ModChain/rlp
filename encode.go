@@ -12,7 +12,7 @@ func rlpEncodeSigned[T int | int8 | int16 | int32 | int64](v T) ([]byte, error) 
 	if v < 0 {
 		return nil, ErrRlpMinusValue
 	}
-	return rlpEncodeUnsigned(uint64(v))
+	return EncodeValue(rlpTrim(binary.BigEndian.AppendUint64(nil, uint64(v))))
 }
 
 func rlpEncodeUnsigned[T uint | uint8 | uint16 | uint32 | uint64 | uintptr](v T) ([]byte, error) {
@@ -21,22 +21,19 @@ func rlpEncodeUnsigned[T uint | uint8 | uint16 | uint32 | uint64 | uintptr](v T)
 
 // rlpEncodeLen returns a buffer that encodes the length of the incoming buffer or array
 func rlpEncodeLen(ln int, isArray bool) []byte {
+	arrayFlg := byte(0)
+	if isArray {
+		arrayFlg = 0x40
+	}
+
 	if ln <= 55 {
-		if isArray {
-			return []byte{byte(0xc0 + ln)}
-		} else {
-			return []byte{byte(0x80 + ln)}
-		}
+		return []byte{byte(0x80+ln) | arrayFlg}
 	}
 	buf := binary.BigEndian.AppendUint64(nil, uint64(ln))
 	for len(buf) > 0 && buf[0] == 0 {
 		buf = buf[1:]
 	}
-	if isArray {
-		return append([]byte{0xf7 + byte(len(buf))}, buf...)
-	} else {
-		return append([]byte{0xb7 + byte(len(buf))}, buf...)
-	}
+	return append([]byte{(0xb7 | arrayFlg) + byte(len(buf))}, buf...)
 }
 
 func rlpTrim(in []byte) []byte {

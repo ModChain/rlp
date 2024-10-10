@@ -20,62 +20,35 @@ func Decode(buf []byte) ([]any, error) {
 		c := buf[0]
 		buf = buf[1:]
 
-		switch {
-		case c <= 0x7f:
+		if c <= 0x7f {
 			res = append(res, []byte{c})
-		case c <= 0xb7:
-			// value, len <= 55
-			ln := c - 0x80
+			continue
+		}
+
+		isArray := c&0x40 == 0x40
+		ln := uint64(c & 0x3f) // 0~55 = as is, 56~63 = actual value comes after
+		if len(buf) < int(ln) {
+			return nil, io.ErrUnexpectedEOF
+		}
+
+		if ln > 55 {
+			ln -= 55
+			ln, buf = rlpDecodeVarLen(buf[:ln]), buf[ln:]
 			if len(buf) < int(ln) {
 				return nil, io.ErrUnexpectedEOF
 			}
-			sub := buf[:ln]
-			buf = buf[ln:]
-			res = append(res, sub)
-		case c <= 0xbf:
-			// value, len > 55
-			lnln := c - 0xb7 // 1~8
-			if len(buf) < int(lnln) {
-				return nil, io.ErrUnexpectedEOF
-			}
-			ln := rlpDecodeVarLen(buf[:lnln])
-			buf = buf[lnln:]
-			if len(buf) < int(ln) {
-				return nil, io.ErrUnexpectedEOF
-			}
-			sub := buf[:ln]
-			buf = buf[ln:]
-			res = append(res, sub)
-		case c <= 0xf7:
-			// array, len <= 55
-			ln := c - 0xc0
-			if len(buf) < int(ln) {
-				return nil, io.ErrUnexpectedEOF
-			}
-			sub := buf[:ln]
-			buf = buf[ln:]
-			tmp, err := Decode(sub)
+		}
+		v := buf[:ln]
+		buf = buf[ln:]
+
+		if isArray {
+			tmp, err := Decode(v)
 			if err != nil {
 				return nil, err
 			}
 			res = append(res, tmp)
-		default:
-			lnln := c - 0xf7 // 1~8
-			if len(buf) < int(lnln) {
-				return nil, io.ErrUnexpectedEOF
-			}
-			ln := rlpDecodeVarLen(buf[:lnln])
-			if len(buf) < int(ln) {
-				return nil, io.ErrUnexpectedEOF
-			}
-			buf = buf[lnln:]
-			sub := buf[:ln]
-			buf = buf[ln:]
-			tmp, err := Decode(sub)
-			if err != nil {
-				return nil, err
-			}
-			res = append(res, tmp)
+		} else {
+			res = append(res, v)
 		}
 	}
 	return res, nil
