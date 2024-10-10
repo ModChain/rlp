@@ -21,6 +21,11 @@ func TestEncode(t *testing.T) {
 			Out: "e52a84075bcd1582520894abdef0123456789abcdef012345678901234578986010203040506",
 			Dec: "[[2a 075bcd15 5208 abdef0123456789abcdef0123456789012345789 010203040506]]",
 		},
+		&encodeTestVector{
+			In:  []any{[]byte("cat"), []any{[]byte("puppy"), []byte("cow")}, []byte("horse"), []any{[]any{}}, []byte("pig"), []any{"0x"}, []byte("sheep")},
+			Out: "e383636174ca85707570707983636f7785686f727365c1c083706967c180857368656570",
+			Dec: "[[636174 [7075707079 636f77] 686f727365 [[]] 706967 [] 7368656570]]",
+		},
 	}
 
 	for _, v := range tests {
