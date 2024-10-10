@@ -69,6 +69,10 @@ func EncodeValue(v any) ([]byte, error) {
 	case uintptr:
 		return rlpEncodeUnsigned(in)
 	case *big.Int:
+		if in == nil {
+			// assume nil value == 0
+			return EncodeValue([]byte{})
+		}
 		return EncodeValue(rlpTrim(in.Bytes()))
 	case []byte:
 		if len(in) == 1 && in[0] <= 0x7f {
