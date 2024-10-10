@@ -5,7 +5,12 @@ import (
 	"io"
 )
 
-func rlpDecodeVarLen(buf []byte) uint64 {
+// DecodeUint64 returns a uint64 value for a 0~8 bytes long value, and will panic if
+// the buffer is longer than that
+func DecodeUint64(buf []byte) uint64 {
+	if len(buf) > 8 {
+		panic("DecodeUint64 input buffer length higher than 8")
+	}
 	// buf is a trimmed bigendian uint64
 	var tmp [8]byte
 	copy(tmp[8-len(buf):], buf)
@@ -33,7 +38,7 @@ func Decode(buf []byte) ([]any, error) {
 
 		if ln > 55 {
 			ln -= 55
-			ln, buf = rlpDecodeVarLen(buf[:ln]), buf[ln:]
+			ln, buf = DecodeUint64(buf[:ln]), buf[ln:]
 			if len(buf) < int(ln) {
 				return nil, io.ErrUnexpectedEOF
 			}
