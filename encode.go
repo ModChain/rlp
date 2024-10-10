@@ -73,6 +73,9 @@ func EncodeValue(v any) ([]byte, error) {
 			// assume nil value == 0
 			return EncodeValue([]byte{})
 		}
+		if in.Sign() < 0 {
+			return nil, ErrRlpMinusValue
+		}
 		return EncodeValue(rlpTrim(in.Bytes()))
 	case []byte:
 		if len(in) == 1 && in[0] <= 0x7f {
