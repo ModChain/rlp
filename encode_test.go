@@ -10,7 +10,7 @@ import (
 )
 
 type encodeTestVector struct {
-	In  []any
+	In  any
 	Out string // as hex
 	Dec string
 }
@@ -33,19 +33,29 @@ func TestEncode(t *testing.T) {
 			Dec: "[[]]",
 		},
 		&encodeTestVector{
-			In:  []any{[]byte{}},
-			Out: "c180", // the empty string ('null') = [ 0x80 ]
-			Dec: "[[]]",
+			In:  []byte{},
+			Out: "80", // the empty string ('null') = [ 0x80 ]
+			Dec: "[]",
 		},
 		&encodeTestVector{
-			In:  []any{[]byte{0x42}},
-			Out: "c142",
-			Dec: "[[42]]",
+			In:  []byte{0x42},
+			Out: "42",
+			Dec: "[42]",
 		},
 		&encodeTestVector{
-			In:  []any{[]byte("dog")},
-			Out: "c483646f67", // the string "dog" = [ 0x83, 'd', 'o', 'g' ]
-			Dec: "[[646f67]]",
+			In:  []byte{0x7f},
+			Out: "7f",
+			Dec: "[7f]",
+		},
+		&encodeTestVector{
+			In:  []byte{0x80},
+			Out: "8180",
+			Dec: "[80]",
+		},
+		&encodeTestVector{
+			In:  []byte("dog"),
+			Out: "83646f67", // the string "dog" = [ 0x83, 'd', 'o', 'g' ]
+			Dec: "[646f67]",
 		},
 		&encodeTestVector{
 			In:  []any{[]byte("cat"), []byte("dog")},
@@ -53,24 +63,24 @@ func TestEncode(t *testing.T) {
 			Dec: "[[636174 646f67]]",
 		},
 		&encodeTestVector{
-			In:  []any{new(big.Int)},
-			Out: "c180", // the integer 0 = [ 0x80 ]
-			Dec: "[[]]",
+			In:  new(big.Int),
+			Out: "80", // the integer 0 = [ 0x80 ]
+			Dec: "[]",
 		},
 		&encodeTestVector{
-			In:  []any{[]byte{0}},
-			Out: "c100", // the byte '\x00' = [ 0x00 ]
-			Dec: "[[00]]",
+			In:  []byte{0},
+			Out: "00", // the byte '\x00' = [ 0x00 ]
+			Dec: "[00]",
 		},
 		&encodeTestVector{
-			In:  []any{[]byte{0x0f}},
-			Out: "c10f", // the byte '\x0f' = [ 0x0f ]
-			Dec: "[[0f]]",
+			In:  []byte{0x0f},
+			Out: "0f", // the byte '\x0f' = [ 0x0f ]
+			Dec: "[0f]",
 		},
 		&encodeTestVector{
-			In:  []any{[]byte{0x04, 0x00}},
-			Out: "c3820400", // the bytes '\x04\x00' = [ 0x82, 0x04, 0x00 ]
-			Dec: "[[0400]]",
+			In:  []byte{0x04, 0x00},
+			Out: "820400", // the bytes '\x04\x00' = [ 0x82, 0x04, 0x00 ]
+			Dec: "[0400]",
 		},
 		&encodeTestVector{
 			In:  []any{[]any{}, []any{[]any{}}, []any{[]any{}, []any{[]any{}}}},
@@ -78,14 +88,14 @@ func TestEncode(t *testing.T) {
 			Dec: "[[[] [[]] [[] [[]]]]]",
 		},
 		&encodeTestVector{
-			In:  []any{[]byte("Lorem ipsum dolor sit amet, consectetur adipisicing elit")}, //
-			Out: "f83ab8384c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465747572206164697069736963696e6720656c6974",
-			Dec: "[[4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465747572206164697069736963696e6720656c6974]]",
+			In:  []byte("Lorem ipsum dolor sit amet, consectetur adipisicing elit"),
+			Out: "b8384c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465747572206164697069736963696e6720656c6974",
+			Dec: "[4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465747572206164697069736963696e6720656c6974]",
 		},
 	}
 
 	for _, v := range tests {
-		res, err := rlp.Encode(v.In...)
+		res, err := rlp.EncodeValue(v.In)
 		if err != nil {
 			t.Errorf("encoding error: %s", err)
 		}
